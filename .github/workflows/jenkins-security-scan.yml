@@ -4,9 +4,6 @@
 name: Jenkins Security Scan
 
 on:
-  push:
-    branches:
-      - master
   pull_request:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
@@ -16,8 +13,65 @@ permissions:
   contents: read
   actions: read
 
+concurrency:
+  group: jenkins-security-scan-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
+  maven-test:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    outputs:
+      docs_only: ${{ steps.pr-paths.outputs.docs_only }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Classify documentation-only pull request
+        id: pr-paths
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import subprocess
+          result = subprocess.run(
+              ["git", "diff", "--name-only", "--no-renames", "-z",
+               f"{os.environ['BASE_SHA']}...{os.environ['HEAD_SHA']}"],
+              check=True, stdout=subprocess.PIPE,
+          )
+          paths = [os.fsdecode(path) for path in result.stdout.split(bytes([0])) if path]
+          docs_only = bool(paths) and all(
+              ("/" not in path and path.lower().endswith(".md"))
+              or path.startswith("docs/") for path in paths
+          )
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"docs_only={str(docs_only).lower()}{chr(10)}")
+          PY
+      - name: Documentation-only status
+        if: steps.pr-paths.outputs.docs_only == 'true'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          git diff --check "$BASE_SHA...$HEAD_SHA"
+          echo "Documentation-only change; Maven tests skipped."
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        if: steps.pr-paths.outputs.docs_only != 'true'
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Run Maven tests
+        if: steps.pr-paths.outputs.docs_only != 'true'
+        run: mvn -B -ntp test
+
   security-scan:
+    needs: maven-test
+    if: always() && (github.event_name != 'pull_request' || needs.maven-test.outputs.docs_only != 'true')
     uses: jenkins-infra/jenkins-security-scan/.github/workflows/jenkins-security-scan.yaml@v2
     with:
       java-cache: 'maven' # Optionally enable use of a build dependency cache. Specify 'maven' or 'gradle' as appropriate.
