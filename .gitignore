@@ -11,3 +11,5 @@ test-platform-evidence/
 *~
 
 dependency-reduced-pom.xml
+__pycache__/
+*.py[cod]
