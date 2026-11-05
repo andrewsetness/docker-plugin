@@ -1,0 +1,17 @@
+schema_version: "1"
+profile:
+  profile_id: infrastructure-tool-v1
+  version: 1.0.0
+behaviors_path: quality/behaviors.yaml
+suites:
+  - suite_id: docker-plugin-verify
+    entrypoint: verify
+    trust: pr-untrusted
+    timeout_seconds: 3600
+    evidence_classes:
+      - static
+      - deterministic
+      - contract
+      - integration
+      - end-to-end
+      - adversarial-security

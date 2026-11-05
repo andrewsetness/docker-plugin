@@ -5,6 +5,7 @@
 .settings
 target
 work
+test-platform-evidence/
 *.iml
 /target
 *~
