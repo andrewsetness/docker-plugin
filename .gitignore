@@ -5,8 +5,11 @@
 .settings
 target
 work
+test-platform-evidence/
 *.iml
 /target
 *~
 
 dependency-reduced-pom.xml
+__pycache__/
+*.py[cod]

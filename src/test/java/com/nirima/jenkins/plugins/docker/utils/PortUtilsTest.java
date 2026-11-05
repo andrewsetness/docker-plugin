@@ -117,7 +117,7 @@ class PortUtilsTest {
                 + sshWaitDuringTry
                 + waitBetweenTries
                 + sshWaitDuringTry;
-        final long maxExpectedTime = minExpectedTime + waitBetweenTries - 1;
+        final long maxExpectedTime = minExpectedTime + waitBetweenTries - 1 + maximumFudgeFactor(waitBetweenTries);
         final long minAllowedTime = minExpectedTime - minimumFudgeFactor(waitBetweenTries);
 
         // When
@@ -199,6 +199,15 @@ class PortUtilsTest {
      */
     private static int minimumFudgeFactor(int oneUnitOfExpectedDelay) {
         return oneUnitOfExpectedDelay / 20;
+    }
+
+    /**
+     * Under load a connect attempt can overrun its configured timeout, so an upper
+     * bound with only one extra delay of slack is too tight. Allow one additional
+     * retry delay before treating the wait as excessive.
+     */
+    private static int maximumFudgeFactor(int oneUnitOfExpectedDelay) {
+        return oneUnitOfExpectedDelay;
     }
 
     private static class SomeServer implements AutoCloseable {

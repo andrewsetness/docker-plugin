@@ -1,0 +1,60 @@
+schema_version: "1"
+behaviors:
+  - behavior_id: docker-plugin.cloud-provisioning
+    description: >-
+      A Docker cloud and template configuration is parsed, validated, and
+      resolved into a provisionable agent definition with the configured
+      image, label, launch method, and retention semantics.
+    criticality: critical
+    required_evidence: [deterministic, integration]
+  - behavior_id: docker-plugin.credential-boundary
+    description: >-
+      Docker server credentials and Docker API connection details are handled
+      without caching a plain HTTP client when credentials are missing and
+      without exposing credential values in logs, persisted configuration, or
+      error output.
+    criticality: critical
+    required_evidence: [contract, adversarial-security]
+  - behavior_id: docker-plugin.configuration-as-code
+    description: >-
+      A configuration-as-code export and round-trip preserve Docker cloud,
+      template, connector, and pull-strategy settings without silent loss or
+      unexpected defaults.
+    criticality: critical
+    required_evidence: [contract, deterministic]
+  - behavior_id: docker-plugin.agent-lifecycle
+    description: >-
+      Provisioned agents are retained, watched, and removed according to the
+      configured retention strategy; a failed or disabled provisioning path
+      leaves no runaway agent, container, or work artifact.
+    criticality: critical
+    required_evidence: [deterministic, integration]
+  - behavior_id: docker-plugin.connection-timeout
+    description: >-
+      Port and SSH connectivity checks retry within the configured bound and
+      fail closed with a clear diagnostic instead of hanging or reporting a
+      false connection.
+    criticality: high
+    required_evidence: [deterministic, adversarial-security]
+  - behavior_id: docker-plugin.disabled-integration-boundary
+    description: >-
+      A disabled Docker cloud or template does not provision an agent and
+      returns a deterministic no-op or diagnostic rather than contacting the
+      Docker host.
+    criticality: critical
+    required_evidence: [contract, adversarial-security]
+critical_journeys:
+  - journey_id: docker-plugin.configure-and-provision-agent
+    description: >-
+      An operator configures a Docker cloud and template, verifies the host
+      connection, provisions an agent through the real provisioning path, and
+      retires it without leaving a container, work directory, or credential
+      artifact behind.
+    behavior_ids:
+      - docker-plugin.cloud-provisioning
+      - docker-plugin.credential-boundary
+      - docker-plugin.configuration-as-code
+      - docker-plugin.agent-lifecycle
+      - docker-plugin.connection-timeout
+      - docker-plugin.disabled-integration-boundary
+    required_evidence: [end-to-end]
