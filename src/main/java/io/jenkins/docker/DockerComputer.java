@@ -17,8 +17,6 @@ import org.jenkinsci.plugins.docker.commons.credentials.DockerServerEndpoint;
  * @author magnayn
  */
 public class DockerComputer extends AbstractCloudComputer<DockerTransientNode> implements TrackedItem {
-    // private static final Logger LOGGER = Logger.getLogger(DockerComputer.class.getName());
-
     public DockerComputer(DockerTransientNode node) {
         super(node);
     }
