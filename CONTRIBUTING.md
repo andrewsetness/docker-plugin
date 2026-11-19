@@ -44,6 +44,12 @@ No new restrictions/conditions are permitted.
 - Provide docker host/api version.
 - Ensure that any code or log examples are surrounded with [the right markdown](https://help.github.com/articles/github-flavored-markdown/) otherwise it'll be unreadable.
 
+# Building and testing
+
+- CI builds and tests with JDK 21 and Maven.
+- Test suite: `mvn -B -ntp test` (the command the pull request workflow runs).
+- Full build: `mvn clean verify` (the command the Gitpod initialization task runs).
+
 # Submitting pull requests
 
 - A PR's description must EITHER refer to an existing issue (either in github or on Jenkins JIRA) OR include a full description as for "Creating new issue".
